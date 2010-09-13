@@ -2,8 +2,82 @@ package Test::Script::Shebang;
 
 use strict;
 use warnings;
-use 5.008_001;
+use 5.006_002;
 our $VERSION = '0.01';
+
+use File::Spec;
+use Test::Builder;
+
+my $tb = Test::Builder->new;
+my $ok = 1;
+
+sub import {
+    my $self = shift;
+    my $caller = caller;
+
+    for my $func (qw/check_shebang check_shebang_from_dir/) {
+        no strict 'refs';
+        *{$caller."::".$func} = \&$func;
+    }
+
+    $tb->exported_to($caller);
+    $tb->plan(@_);
+}
+
+sub check_shebang {
+    my @files = @_;
+
+    for my $file (@files) {
+        unless (-f $file) {
+            $tb->ok(0, $file);
+            $tb->diag("$file dose not exists");
+            next;
+        }
+
+        open my $fh, '<', $file or die "$file: $!";
+        local $/ = "\n";
+        chomp(my $line = <$fh>);
+        close $fh or die "$file: $!";
+
+        unless ($line =~ s/^\s*\#!\s*//) {
+            $tb->ok(0, $file);
+            $tb->diag("Not a shebang file: $file");
+            next;
+        }
+
+        my ($cmd, $arg) = split ' ', $line, 2;
+        $cmd =~ s|^.*/||;
+        unless ($cmd =~ m{^perl(?:\z|[^a-z])}) {
+            $tb->ok(0, $file);
+            $tb->diag("$file is not perl script");
+            next;
+        }
+        $tb->ok(1, $file);
+    }
+
+    return $ok;
+}
+
+sub check_shebang_from_dir {
+    my @dirs = @_;
+
+    for my $dir (@dirs) {
+        unless (-d $dir) {
+            $tb->ok(0, $dir);
+            $tb->diag("$dir dose not exists");
+            next;
+        }
+
+        opendir my $dh, $dir or die "$dir: $!";
+        my @files = map { File::Spec->catfile($dir, $_) } grep !/^\.{1,2}$/, readdir $dh;
+        closedir $dh or die "$dir: $!";
+
+        local $Test::Builder::Level = $Test::Builder::Level + 1;
+        $tb->ok(check_shebang(@files), $dir);
+    }
+
+    return $ok;
+}
 
 1;
 __END__
@@ -14,15 +88,27 @@ __END__
 
 =head1 NAME
 
-Test::Script::Shebang -
+Test::Script::Shebang - check the perl script shebang
 
 =head1 SYNOPSIS
 
+  use Test::More;
   use Test::Script::Shebang;
+  
+  check_shebang('scripts/foo.pl');
+  check_shebang_from_dir('bin');
+  
+  done_testing;
 
 =head1 DESCRIPTION
 
 Test::Script::Shebang is
+
+=head1 FUNCTIONS
+
+=head2 check_shebang(@files)
+
+=head2 check_shebang_from_dir(@dirs);
 
 =head1 AUTHOR
 
