@@ -88,7 +88,7 @@ __END__
 
 =head1 NAME
 
-Test::Script::Shebang - check the perl script shebang
+Test::Script::Shebang - checking the perl script shebang
 
 =head1 SYNOPSIS
 
@@ -102,13 +102,37 @@ Test::Script::Shebang - check the perl script shebang
 
 =head1 DESCRIPTION
 
-Test::Script::Shebang is
+Test::Script::Shebang is checking the perl script shebang.
 
 =head1 FUNCTIONS
 
 =head2 check_shebang(@files)
 
+checking for each file(s).
+
+into script/foo.pl
+
+  #!perl
+  use strict;
+  use warnings;
+  print "foo";
+  ...
+
+into xt/check_script_shebang.t
+
+  use Test::More;
+  use Test::Script::Shebang;
+  check_shebang('script/foo.pl'); # success
+  done_testing;
+
 =head2 check_shebang_from_dir(@dirs);
+
+checking for each files in directory.
+
+  use Test::More;
+  use Test::Script::Shebang;
+  check_shebang_from_dir('script', 'bin');
+  done_testing;
 
 =head1 AUTHOR
 
