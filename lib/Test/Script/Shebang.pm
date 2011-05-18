@@ -61,7 +61,7 @@ sub check_shebang {
 sub check_shebang_from_dir {
     my @dirs = @_;
 
-    for my $dir (@dirs) {
+    for my $dir (sort @dirs) {
         unless (-d $dir) {
             $tb->ok(0, $dir);
             $tb->diag("$dir dose not exists");
@@ -69,7 +69,7 @@ sub check_shebang_from_dir {
         }
 
         opendir my $dh, $dir or die "$dir: $!";
-        my @files = map { File::Spec->catfile($dir, $_) } grep !/^\.{1,2}$/, readdir $dh;
+        my @files = map { File::Spec->catfile($dir, $_) } grep !/^\.{1,2}$/, sort readdir $dh;
         closedir $dh or die "$dir: $!";
 
         local $Test::Builder::Level = $Test::Builder::Level + 1;
