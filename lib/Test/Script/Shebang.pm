@@ -3,7 +3,7 @@ package Test::Script::Shebang;
 use strict;
 use warnings;
 use 5.006_002;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use File::Spec;
 use Test::Builder;
